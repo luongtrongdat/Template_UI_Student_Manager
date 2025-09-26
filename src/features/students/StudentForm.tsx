@@ -5,45 +5,57 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-} from '@mui/material';
-import React, { useEffect, useState } from 'react';
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
 
-import type { Student } from './types';
+import type { Student } from "./types";
+import { useDispatch } from "react-redux";
+import { addStudent, editStudent } from "../../store/slices/studentSlice";
 
 interface Props {
   open: boolean;
   initial?: Partial<Student>;
   onClose: () => void;
-  onSubmit: (data: { id?: string; name: string; age: number; grade: string }) => void;
+  onSubmit: (data: {
+    id?: string;
+    name: string;
+    age: number;
+    grade: string;
+  }) => void;
 }
-
-const StudentForm: React.FC<Props> = ({ open, initial = {}, onClose, onSubmit }) => {
-  const [name, setName] = useState(initial.name ?? '');
+const StudentForm: React.FC<Props> = ({
+  open,
+  initial = {},
+  onClose,
+}) => {
+  const [name, setName] = useState(initial.name ?? "");
   const [age, setAge] = useState(initial.age ?? 16);
-  const [grade, setGrade] = useState(initial.grade ?? '');
-
+  const [grade, setGrade] = useState(initial.grade ?? "");
+  const dispatch: any = useDispatch();
   useEffect(() => {
-    setName(initial.name ?? '');
+    setName(initial.name ?? "");
     setAge(initial.age ?? 16);
-    setGrade(initial.grade ?? '');
+    setGrade(initial.grade ?? "");
   }, [initial, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    onSubmit({
+    const newUser = {
       id: initial.id,
       name: name.trim(),
       age: Number(age),
       grade: grade.trim(),
-    });
-    // do not close here if you want parent to decide; we'll close after onSubmit in demo
+    };
+    initial.id ? dispatch(editStudent(newUser)) : dispatch(addStudent(newUser));
+    
+    onClose();
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{initial.id ? 'Edit Student' : 'Add Student'}</DialogTitle>
+        <DialogTitle>{initial.id ? "Edit Student" : "Add Student"}</DialogTitle>
         <DialogContent className="flex flex-col gap-[15px] space-y-4 !pt-2">
           <TextField
             label="Name"
@@ -73,7 +85,7 @@ const StudentForm: React.FC<Props> = ({ open, initial = {}, onClose, onSubmit })
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="contained" color="primary">
-            {initial.id ? 'Save' : 'Add'}
+            {initial.id ? "Save" : "Add"}
           </Button>
         </DialogActions>
       </form>

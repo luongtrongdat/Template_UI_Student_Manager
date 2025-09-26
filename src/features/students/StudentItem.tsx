@@ -3,6 +3,7 @@ import { Delete, Edit } from '@mui/icons-material';
 
 import React from 'react';
 import type { Student } from './types';
+import { useDispatch } from 'react-redux';
 
 interface Props {
   student: Student;

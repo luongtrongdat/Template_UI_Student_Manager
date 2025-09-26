@@ -1,19 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@mui/material';
 import type { Student } from './features/students/types';
 import StudentForm from './features/students/StudentForm';
 import StudentList from './features/students/StudentList';
 import StudentSearchSortFilter from './features/students/StudentSearchSortFilter';
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteStudent, editStudent, getAllStudent } from './store/slices/studentSlice';
 
-const initialData: Student[] = [
-  { id: '1', name: 'Nguyễn Văn An', age: 16, grade: '10A1' },
-  { id: '2', name: 'Trần Thị Bình', age: 17, grade: '11B1' },
-  { id: '3', name: 'Lê Văn Cường', age: 15, grade: '10A2' },
-];
+
 
 const App: React.FC = () => {
-  const [students, setStudents] = useState<Student[]>(initialData);
+
   const [openForm, setOpenForm] = useState(false);
   const [editing, setEditing] = useState<Partial<Student> | undefined>(undefined);
 
@@ -22,11 +20,14 @@ const App: React.FC = () => {
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'age'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const students= useSelector((state:any)=>{
+     return state.students.students
+  })  
+  const dispatch :any= useDispatch();
+  useEffect(()=>{
+      dispatch(getAllStudent());
+  },[])
 
-  const grades = useMemo(() => {
-    const g = Array.from(new Set(students.map((s) => s.grade))).sort();
-    return g;
-  }, [students]);
 
   const handleAddClick = () => {
     setEditing(undefined);
@@ -41,16 +42,10 @@ const App: React.FC = () => {
   }) => {
     if (data.id) {
       // update
-      setStudents((prev) =>
-        prev.map((p) => (p.id === data.id ? ({ ...p, ...data } as Student) : p)),
-      );
+     
     } else {
       // create
-      const id = Date.now().toString();
-      setStudents((prev) => [
-        { id, name: data.name, age: data.age, grade: data.grade },
-        ...prev,
-      ]);
+   
     }
     setOpenForm(false);
   };
@@ -58,11 +53,17 @@ const App: React.FC = () => {
   const handleEdit = (s: Student) => {
     setEditing(s);
     setOpenForm(true);
+    dispatch(editStudent(s))
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Xác nhận xóa học sinh?')) return;
-    setStudents((prev) => prev.filter((p) => p.id !== id));
+
+  // HAM XOA
+  const handleDelete = (id: string| number) => {
+    let choice  = confirm('Xác nhận xóa học sinh?') 
+    if (choice){
+      dispatch(deleteStudent(id))
+    } 
+    return;
   };
 
   const handleClearFilters = () => {
@@ -78,14 +79,14 @@ const App: React.FC = () => {
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      out = out.filter((s) => s.name.toLowerCase().includes(q));
+      out = out.filter((s:any) => s.name.toLowerCase().includes(q));
     }
 
     if (gradeFilter !== 'all') {
-      out = out.filter((s) => s.grade === gradeFilter);
+      out = out.filter((s:any) => s.grade === gradeFilter);
     }
 
-    out.sort((a, b) => {
+    out.sort((a :any , b :any) => {
       if (sortBy === 'name') {
         const r = a.name.localeCompare(b.name);
         return sortDir === 'asc' ? r : -r;
@@ -102,28 +103,30 @@ const App: React.FC = () => {
     <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">🎓 Student Manager</h1>
 
+
+      {/* ADD */}
       <div className="flex gap-4 mb-4">
         <Button variant="contained" color="primary" onClick={handleAddClick}>
           Add Student
         </Button>
       </div>
-
+      {/* Loc , sap xep */}
       <StudentSearchSortFilter
         search={search}
         gradeFilter={gradeFilter}
         sortBy={sortBy}
         sortDir={sortDir}
-        grades={grades}
         onSearchChange={setSearch}
         onGradeChange={setGradeFilter}
         onSortChange={(by, dir) => {
           setSortBy(by);
           setSortDir(dir);
-        }}
-        onClear={handleClearFilters}
-      />
-
+        } }
+        onClear={handleClearFilters}/>
       <div className="mt-6">
+
+
+        {/* In Danh sach sinh vien */}
         <StudentList
           students={filteredSorted}
           onEdit={handleEdit}
@@ -131,6 +134,8 @@ const App: React.FC = () => {
         />
       </div>
 
+
+        {/* form dien sinh vien */}
       <StudentForm
         open={openForm}
         initial={editing}
